@@ -10,8 +10,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Igor Galeta', 'Igor Malinovskiy']
   spec.email         = ['igor.malinovskiy@netfix.xyz']
 
-  spec.summary       = ''
-  spec.description   = ''
+  spec.summary       = 'Sign API requests with HMAC signature'
   spec.homepage      = 'https://github.com/psyipm/api_signature'
   spec.license       = 'MIT'
 

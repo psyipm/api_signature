@@ -1,8 +1,12 @@
+[![Build Status](https://semaphoreci.com/api/v1/igormalinovskiy/api_signature/branches/master/shields_badge.svg)](https://semaphoreci.com/igormalinovskiy/api_signature)
+[![Code Climate](https://codeclimate.com/github/psyipm/api_signature/badges/gpa.svg)](https://codeclimate.com/github/psyipm/api_signature)
+[![Gem Version](https://badge.fury.io/rb/api_signature.svg)](https://badge.fury.io/rb/api_signature)
+
 # ApiSignature
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/api_signature`. To experiment with that code, run `bin/console` for an interactive prompt.
+Simple HMAC-SHA1 authentication via headers
 
-TODO: Delete this and the text above, and describe your gem
+This gem will generate signature for the client requests and verify that signature on the server side
 
 ## Installation
 
@@ -16,13 +20,99 @@ And then execute:
 
     $ bundle
 
-Or install it yourself as:
-
-    $ gem install api_signature
-
 ## Usage
 
-TODO: Write usage instructions here
+### Server side
+
+Implement warden strategy:
+```ruby
+module MyApplication
+  module API
+    class ClientAuthenticatable < Warden::Strategies::Base
+      delegate :valid?, to: :api_request
+
+      def authenticate!
+        # Find client in database by public api_key
+        resource = Client.find_for_token_authentication(api_request.access_key)
+        return fail!(:not_found_in_database) unless resource
+
+        # Check request signature
+        return unless api_request.correct?(resource.api_key, resource.api_secret)
+
+        # Perform some after_authentication callbacks
+        resource.after_authentication
+
+        # Tell warden that authentication was successful
+        success!(resource)
+      end
+
+      private
+
+      def api_request
+        @api_request ||= ::ApiSignature::Request.new(env)
+      end
+    end
+  end
+end
+```
+
+```ruby
+module MyApplication
+  module API
+    module Authentication
+      extend ActiveSupport::Concern
+
+      protected
+
+      def warden
+        @warden ||= request.env['warden']
+      end
+
+      def current_client
+        @current_client ||= warden.user(:client)
+      end
+
+      def authenticate_client!
+        warden.authenticate!(:client_authenticatable, scope: :client)
+      end
+    end
+  end
+end
+```
+
+```ruby
+class Api::BaseController < ActionController::API do
+  abstract!
+
+  include MyApplication::API::Authentication
+
+  before_action :authenticate_client!
+end
+```
+
+### On client side:
+
+```ruby
+options = {
+  request_method: 'GET',
+  path: '/api/v1/some_path'
+  access_key: 'client public api_key',
+  timestamp: Time.zone.now.to_i
+}
+
+signature = ApiSignature::Generator.new(options).generate_signatute('api_secret')
+```
+
+By default, the generated signature will be valid for 2 hours
+This could be changed via initializer:
+
+```ruby
+# config/initializers/api_signature.rb
+
+ApiSignature.setup do |config|
+  config.signature_ttl = 1.minute
+end
+```
 
 ## Development
 
