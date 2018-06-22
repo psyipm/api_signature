@@ -7,6 +7,21 @@ require 'active_support/core_ext/class'
 require 'active_support/core_ext/object/try'
 
 module ApiSignature
-  autoload :Signature, 'api_signature/signature'
-  autoload :ApiRequest, 'api_signature/api_request'
+  autoload :Builder, 'api_signature/builder'
+  autoload :Validator, 'api_signature/validator'
+  autoload :Generator, 'api_signature/generator'
+  autoload :Request, 'api_signature/request'
+
+  # Time to live for generated signature
+  mattr_accessor :signature_ttl
+  self.signature_ttl = 2.hours
+
+  # @example
+  #   ApiSignature.setup do |config|
+  #     config.signature_ttl = 2.minutes
+  #   end
+  #
+  def self.setup
+    yield self
+  end
 end

@@ -3,9 +3,7 @@
 require 'rack/request'
 
 module ApiSignature
-  class ApiRequest < ::Rack::Request
-    KEYS = %w[X-Access-Key X-Signature X-Timestamp].freeze
-
+  class Request < ::Rack::Request
     HEADER_KEYS = {
       access_key: 'HTTP_X_ACCESS_KEY',
       signature:  'HTTP_X_SIGNATURE',
@@ -32,10 +30,10 @@ module ApiSignature
       @access_key ||= @env[HEADER_KEYS[:access_key]]
     end
 
-    protected
+    private
 
     def validator
-      @validator ||= Signature.new(validator_params)
+      @validator ||= Validator.new(validator_params)
     end
 
     def validator_params
