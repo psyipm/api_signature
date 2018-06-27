@@ -114,6 +114,67 @@ ApiSignature.setup do |config|
 end
 ```
 
+## Testing
+
+In your `rails_helper.rb`:
+
+```ruby
+require 'api_signature/spec_support/helper'
+
+RSpec.configure do |config|
+  config.include ApiSignature::SpecSupport::Helper, type: :controller
+end
+```
+
+This will enable the following methods in controller tests:
+
+* get_with_signature(client, action_name, params = {})
+* post_with_signature(client, action_name, params = {})
+* put_with_signature(client, action_name, params = {})
+* patch_with_signature(client, action_name, params = {})
+* delete_with_signature(client, action_name, params = {})
+
+`client` object should respond to `#api_key` and `#api_secret`
+
+Example usage:
+
+```ruby
+RSpec.describe Api::V1::OrdersController do
+  let(:client) { FactoryBot.create(:client) }
+  # or any object, that responds to #api_key and #api_secret
+  # let(:client) { OpenStruct.new(api_key: 'some_key', api_secret: 'some_api_secret') }
+
+  it 'should filter orders by state' do
+    get_with_signature client, :index, state: :paid
+
+    expect(last_response.status).to eq 200
+    expect(last_response.body).to have_node(:orders)
+    expect(last_response.body).to have_node(:state).with('paid')
+  end
+
+  let(:order_attributes) { FactoryBot.attributes_for(:order) }
+
+  it 'should create new order' do
+    post_with_signature client, :create, order: order_attributes
+  end
+end
+```
+
+For nested resources path can be specified explicitly using `path` parameter:
+
+```ruby
+# path: /api/v1/orders/:order_id/comments
+
+RSpec.describe Api::V1::CommentsController do
+  let(:client) { OpenStruct.new(api_key: 'some_key', api_secret: 'some_api_secret') }
+  let(:order) { FactoryBot.create(:order) }
+
+  it 'should update comment for order' do
+    put_with_signature client, :update, path: { order_id: order.id }, comment: { content: 'Some value' }
+  end
+end
+```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
