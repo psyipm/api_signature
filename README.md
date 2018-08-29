@@ -100,7 +100,7 @@ options = {
   timestamp: Time.zone.now.to_i
 }
 
-signature = ApiSignature::Generator.new(options).generate_signatute('api_secret')
+signature = ApiSignature::Generator.new(options).generate_signature('api_secret')
 ```
 
 By default, the generated signature will be valid for 2 hours
