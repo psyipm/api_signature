@@ -8,11 +8,7 @@ RSpec.describe ApiSignature::Builder do
       access_key: 'api_key',
       secret: 'api_secret',
       request_method: 'GET',
-      scheme: 'https',
-      host: 'localhost',
-      port: '3000',
       path: '/api/v1/some_path',
-      params: 'key1=value',
       timestamp: '1503658902'
     }
   end
@@ -37,10 +33,6 @@ RSpec.describe ApiSignature::Builder do
     expect(builder.options[:request_method]).to eq env[:request_method]
     expect(builder.options[:path]).to eq env[:path]
     expect(builder.options[:access_key]).to eq env[:access_key]
-  end
-
-  it 'should build url' do
-    expect(builder.url.to_s).to eq 'https://localhost:3000/api/v1/some_path'
   end
 
   it 'should generate signature' do
