@@ -35,8 +35,9 @@ module ApiSignature
       def with_signature(http_method, api_key, secret, action_name, params = {})
         path = PathBuilder.new(controller, action_name, params).path
         headers = HeadersBuilder.new(api_key, secret, http_method, path).headers
+        custom_headers = params.delete(:headers) || {}
 
-        send(http_method, path, params, headers)
+        send(http_method, path, params, headers.merge(custom_headers))
       end
     end
   end
