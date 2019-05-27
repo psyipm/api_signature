@@ -6,9 +6,10 @@ require 'digest/sha1'
 module ApiSignature
   class Generator
     SPLITTER = '|'
-    TTL = 2.hours
 
     delegate :valid?, :expired?, :timestamp, to: :validator
+
+    attr_reader :options
 
     def initialize(options = {})
       @options = options
@@ -22,7 +23,7 @@ module ApiSignature
     private
 
     def validator
-      Validator.new(@options)
+      Validator.new(options)
     end
 
     def digest
@@ -31,9 +32,9 @@ module ApiSignature
 
     def string_to_sign
       [
-        @options[:request_method],
-        @options[:path],
-        @options[:access_key],
+        options[:request_method],
+        options[:path],
+        options[:access_key],
         timestamp.to_i
       ].map(&:to_s).join(SPLITTER)
     end

@@ -97,7 +97,7 @@ options = {
   request_method: 'GET',
   path: '/api/v1/some_path'
   access_key: 'client public api_key',
-  timestamp: Time.zone.now.to_i
+  timestamp: Time.now.utc.to_i
 }
 
 signature = ApiSignature::Generator.new(options).generate_signature('api_secret')

@@ -40,7 +40,7 @@ RSpec.describe ApiSignature::Builder do
   end
 
   it 'should delegate `expired?` to signature' do
-    params = env.merge(timestamp: Time.zone.now.to_i)
+    params = env.merge(timestamp: Time.now.utc.to_i)
     builder = described_class.new(params)
 
     expect(builder.expired?).to eq false

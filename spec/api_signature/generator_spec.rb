@@ -22,7 +22,7 @@ RSpec.describe ApiSignature::Generator do
   end
 
   it 'should be valid within time range' do
-    params = options.merge(timestamp: Time.zone.now.to_i)
+    params = options.merge(timestamp: Time.now.utc.to_i)
     generator = described_class.new(params)
     signature = generator.generate_signature(secret)
 

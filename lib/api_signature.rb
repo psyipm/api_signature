@@ -2,7 +2,6 @@
 
 require 'api_signature/version'
 require 'active_support/time'
-require 'active_support/time_with_zone'
 require 'active_support/core_ext/class'
 require 'active_support/core_ext/object/try'
 

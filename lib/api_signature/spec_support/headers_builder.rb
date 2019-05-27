@@ -31,7 +31,7 @@ module ApiSignature
           request_method: http_method.to_s.upcase,
           path: path,
           access_key: access_key,
-          timestamp: Time.zone.now.to_i
+          timestamp: Time.now.utc.to_i
         }
       end
     end

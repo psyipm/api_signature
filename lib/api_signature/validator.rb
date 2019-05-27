@@ -6,7 +6,7 @@ module ApiSignature
 
     def initialize(options)
       @options = options
-      @timestamp = Time.zone.at(@options[:timestamp].to_i)
+      @timestamp = Time.at(@options[:timestamp].to_i).utc
     end
 
     def valid?(signature, secret)
@@ -33,7 +33,7 @@ module ApiSignature
     end
 
     def ttl
-      ApiSignature.signature_ttl || TTL
+      ApiSignature.signature_ttl
     end
   end
 end
