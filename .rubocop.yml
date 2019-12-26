@@ -1,5 +1,5 @@
 AllCops:
-  TargetRubyVersion: 2.4.4
+  TargetRubyVersion: 2.5.5
   Exclude:
     - "bin/*"
     - "Guardfile"
@@ -32,14 +32,3 @@ Metrics/BlockLength:
 
 Metrics/MethodLength:
   Max: 15
-
-##################### Rails ##################################
-
-Rails:
-  Enabled: true
-
-Rails/SkipsModelValidations:
-  Enabled: false
-
-Rails/InverseOf:
-  Enabled: false
