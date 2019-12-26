@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
 require 'api_signature/version'
-require 'active_support/time'
-require 'active_support/core_ext/class'
-require 'active_support/core_ext/object/try'
+require 'api_signature/configuration'
 
 module ApiSignature
   autoload :Builder, 'api_signature/builder'
@@ -11,9 +9,19 @@ module ApiSignature
   autoload :Generator, 'api_signature/generator'
   autoload :Request, 'api_signature/request'
 
-  # Time to live for generated signature
-  mattr_accessor :signature_ttl
-  self.signature_ttl = 2.hours
+  autoload :Signature, 'api_signature/signature'
+
+  class << self
+    attr_writer :configuration
+  end
+
+  def self.configuration
+    @configuration ||= Configuration.new
+  end
+
+  def self.reset
+    @configuration = Configuration.new
+  end
 
   # @example
   #   ApiSignature.setup do |config|
@@ -21,6 +29,8 @@ module ApiSignature
   #   end
   #
   def self.setup
-    yield self
+    yield configuration
   end
 end
+
+require 'api_signature/utils'
