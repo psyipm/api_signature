@@ -22,6 +22,9 @@ module ApiSignature
     # @return [String] For debugging purposes.
     attr_reader :content_sha256
 
+    # @return [String] For debugging purposes.
+    attr_reader :signature
+
     def initialize(attributes)
       attributes.each do |key, value|
         instance_variable_set("@#{key}", value)

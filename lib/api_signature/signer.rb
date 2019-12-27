@@ -8,6 +8,8 @@ module ApiSignature
   #     signer = ApiSignature::Signer.new('access key', 'secret key', uri_escape_path: true)
   #
   class Signer
+    NAME = 'API-HMAC-SHA256'
+
     # Options:
     # @option options [Array<String>] :unsigned_headers ([]) A list of
     #   headers that should not be signed. This is useful when a proxy
@@ -16,10 +18,13 @@ module ApiSignature
     # @option options [Boolean] :uri_escape_path (true) When `true`,
     #   the request URI path is uri-escaped as part of computing the canonical
     #   request string.
-
+    #
     # @option options [Boolean] :apply_checksum_header (false) When `true`,
     #   the computed content checksum is returned in the hash of signature
     #   headers.
+    #
+    # @option options [String] :signature_header (authorization) Header name
+    #   for signature
     #
     def initialize(access_key, secret_key, options = {})
       @access_key = access_key
@@ -59,29 +64,14 @@ module ApiSignature
     #   a `#headers` method. The headers must be applied to your request.
     def sign_request(request)
       builder = Builder.new(request, unsigned_headers)
-
-      sigv4_headers = builder.build_sign_headers(apply_checksum_header?)
-      path = Utils.url_path(builder.uri.path, uri_escape_path?)
-
-      # compute signature parts
-      creq = builder.canonical_request(path)
-      sts = string_to_sign(builder.datetime, creq)
-      sig = signature(builder.date, sts)
+      sig_headers = builder.build_sign_headers(apply_checksum_header?)
+      data = build_signature(builder)
 
       # apply signature
-      sigv4_headers['authorization'] = [
-        "API-HMAC-SHA256 Credential=#{credential(date)}",
-        "SignedHeaders=#{builder.signed_headers_names}",
-        "Signature=#{sig}"
-      ].join(', ')
+      sig_headers[signature_header_name] = data[:header]
 
       # Returning the signature components.
-      Signature.new(
-        headers: sigv4_headers,
-        string_to_sign: sts,
-        canonical_request: creq,
-        content_sha256: builder.content_sha256
-      )
+      Signature.new(data.merge!(headers: sig_headers))
     end
 
     private
@@ -94,6 +84,10 @@ module ApiSignature
       @options[:apply_checksum_header] == true
     end
 
+    def signature_header_name
+      @options[:signature_header] || ApiSignature.configuration.signature_header
+    end
+
     def unsigned_headers
       @unsigned_headers ||= build_unsigned_headers
     end
@@ -102,9 +96,34 @@ module ApiSignature
       Set.new(@options.fetch(:unsigned_headers, []).map(&:downcase)) << 'authorization'
     end
 
+    def build_signature(builder)
+      path = Utils.url_path(builder.uri.path, uri_escape_path?)
+
+      # compute signature parts
+      creq = builder.canonical_request(path)
+      sts = string_to_sign(builder.datetime, creq)
+      sig = signature(builder.date, sts)
+
+      {
+        header: build_signature_header(builder, sig),
+        content_sha256: builder.content_sha256,
+        string_to_sign: sts,
+        canonical_request: creq,
+        signature: sig
+      }
+    end
+
+    def build_signature_header(builder, signature)
+      [
+        "#{NAME} Credential=#{credential(builder.date)}",
+        "SignedHeaders=#{builder.signed_headers_names}",
+        "Signature=#{signature}"
+      ].join(', ')
+    end
+
     def string_to_sign(datetime, canonical_request)
       [
-        'API-HMAC-SHA256',
+        NAME,
         datetime,
         Utils.sha256_hexdigest(canonical_request)
       ].join(Builder::SPLITTER)

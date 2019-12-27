@@ -8,8 +8,9 @@ module ApiSignature
   autoload :Validator, 'api_signature/validator'
   autoload :Generator, 'api_signature/generator'
   autoload :Request, 'api_signature/request'
-
+  autoload :Signer, 'api_signature/signer'
   autoload :Signature, 'api_signature/signature'
+  autoload :Utils, 'api_signature/utils'
 
   class << self
     attr_writer :configuration
@@ -32,5 +33,3 @@ module ApiSignature
     yield configuration
   end
 end
-
-require 'api_signature/utils'

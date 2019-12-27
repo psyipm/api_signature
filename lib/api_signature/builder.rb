@@ -34,7 +34,7 @@ module ApiSignature
     end
 
     def date
-      @date ||= datetime[0, 8]
+      @date ||= datetime.to_s.scan(/\d/).take(8).join
     end
 
     def content_sha256
