@@ -26,7 +26,7 @@ module ApiSignature
     end
 
     def headers
-      @headers ||= extract_headers
+      @headers ||= Utils.normalize_keys(settings[:headers])
     end
 
     def datetime
@@ -89,15 +89,6 @@ module ApiSignature
       raise ArgumentError, 'missing required option :url' unless settings[:url]
 
       URI.parse(settings[:url].to_s)
-    end
-
-    def extract_headers
-      return {} unless settings[:headers]
-
-      settings[:headers].to_hash.inject({}) do |hash, (key, value)|
-        hash[key.downcase] = value
-        hash
-      end
     end
 
     def extract_host_from_uri

@@ -93,7 +93,7 @@ module ApiSignature
     end
 
     def build_unsigned_headers
-      Set.new(@options.fetch(:unsigned_headers, []).map(&:downcase)) << 'authorization'
+      Set.new(@options.fetch(:unsigned_headers, []).map(&:downcase)) << signature_header_name
     end
 
     def build_signature(builder)

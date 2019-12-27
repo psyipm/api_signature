@@ -91,5 +91,11 @@ module ApiSignature
     def self.hexhmac(key, value)
       OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha256'), key, value)
     end
+
+    def self.normalize_keys(hash)
+      return {} unless hash
+
+      hash.transform_keys { |key| key.to_s.downcase }
+    end
   end
 end

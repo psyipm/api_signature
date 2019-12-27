@@ -6,10 +6,9 @@ require 'api_signature/configuration'
 module ApiSignature
   autoload :Builder, 'api_signature/builder'
   autoload :Validator, 'api_signature/validator'
-  autoload :Generator, 'api_signature/generator'
-  autoload :Request, 'api_signature/request'
   autoload :Signer, 'api_signature/signer'
   autoload :Signature, 'api_signature/signature'
+  autoload :AuthHeader, 'api_signature/auth_header'
   autoload :Utils, 'api_signature/utils'
 
   class << self
