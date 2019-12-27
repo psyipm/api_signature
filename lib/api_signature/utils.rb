@@ -97,5 +97,16 @@ module ApiSignature
 
       hash.transform_keys { |key| key.to_s.downcase }
     end
+
+    # constant-time comparison algorithm to prevent timing attacks
+    def self.secure_compare(string_a, string_b)
+      return false if string_a.nil? || string_b.nil? || string_a.bytesize != string_b.bytesize
+
+      l = string_a.unpack "C#{string_a.bytesize}"
+
+      res = 0
+      string_b.each_byte { |byte| res |= byte ^ l.shift }
+      res == 0
+    end
   end
 end

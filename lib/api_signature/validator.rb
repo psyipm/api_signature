@@ -16,7 +16,7 @@ module ApiSignature
   #     }
   #     validator = ApiSignature::Validator.new(request, uri_escape_path: true)
   #     validator.access_key # get key from request headers
-  #
+  #     validator.valid?('secret_key')
   #
   class Validator
     attr_reader :request
@@ -53,9 +53,12 @@ module ApiSignature
     end
 
     def valid_signature?(secret_key)
+      signer = Signer.new(access_key, secret_key, @options)
+      data = signer.sign_request(request)
+
       Utils.secure_compare(
         auth_header.signature,
-        server_token.signature
+        data.signature
       )
     end
 
