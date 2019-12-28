@@ -8,7 +8,7 @@ module ApiSignature
     AUTHN_PAIR_DELIMITERS = /(?:,|\t+)/.freeze
 
     def initialize(authorization)
-      @authorization = authorization
+      @authorization = authorization.to_s
     end
 
     def credential

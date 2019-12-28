@@ -5,7 +5,7 @@ module ApiSignature
     attr_accessor :signature_ttl, :signature_header, :datetime_format
 
     def initialize
-      @signature_ttl = 2 * 60
+      @signature_ttl = 5 * 60
       @datetime_format = '%Y-%m-%dT%H:%M:%S.%L%z'
       @signature_header = 'authorization'
     end

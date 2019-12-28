@@ -38,7 +38,7 @@ module ApiSignature
     end
 
     def content_sha256
-      @content_sha256 ||= (headers['x-content-sha256'] || Utils.sha256_hexdigest(body))
+      @content_sha256 ||= Utils.sha256_hexdigest(body)
     end
 
     def body

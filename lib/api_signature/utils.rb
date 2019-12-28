@@ -3,6 +3,7 @@
 require 'openssl'
 require 'digest/sha1'
 require 'tempfile'
+require 'date'
 
 module ApiSignature
   module Utils
@@ -107,6 +108,13 @@ module ApiSignature
       res = 0
       string_b.each_byte { |byte| res |= byte ^ l.shift }
       res == 0
+    end
+
+    def self.safe_parse_datetime(value, format = nil)
+      format ||= ApiSignature.configuration.datetime_format
+      DateTime.strptime(value, format)
+    rescue ArgumentError => _e
+      nil
     end
   end
 end
