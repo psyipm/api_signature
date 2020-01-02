@@ -30,6 +30,12 @@ RSpec.describe ApiSignature::Validator do
     expect(validator.valid?(secret_key)).to eq true
   end
 
+  it 'must be wrong request with invalid secret keys' do
+    expect(validator.valid?('wrong')).to eq false
+    expect(validator.valid?(nil)).to eq false
+    expect(validator.valid?(Time.now.to_i)).to eq false
+  end
+
   it 'must return signed_headers only' do
     expect(validator.signed_headers.size).to eq 4
 

@@ -53,6 +53,8 @@ module ApiSignature
     end
 
     def valid_signature?(secret_key)
+      return false unless secret_key
+
       signer = Signer.new(access_key, secret_key, @options)
       data = signer.sign_request(request)
 

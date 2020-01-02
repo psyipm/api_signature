@@ -26,6 +26,8 @@ module ApiSignature
     # @option options [String] :signature_header (authorization) Header name
     #   for signature
     #
+    # @option options [String] :service (web) Service name
+    #
     def initialize(access_key, secret_key, options = {})
       @access_key = access_key
       @secret_key = secret_key
@@ -88,6 +90,10 @@ module ApiSignature
       @options[:signature_header] || ApiSignature.configuration.signature_header
     end
 
+    def service
+      @options[:service] || ApiSignature.configuration.service
+    end
+
     def unsigned_headers
       @unsigned_headers ||= build_unsigned_headers
     end
@@ -130,14 +136,15 @@ module ApiSignature
     end
 
     def signature(date, string_to_sign)
-      k_date = Utils.hmac('API' + @secret_key, date)
-      k_credentials = Utils.hmac(k_date, 'api_request')
+      k_date = Utils.hmac("API#{@secret_key}", date)
+      k_service = Utils.hmac(k_date, service)
+      k_credentials = Utils.hmac(k_service, 'api_request')
 
       Utils.hexhmac(k_credentials, string_to_sign)
     end
 
     def credential(date)
-      "#{@access_key}/#{date}/api_request"
+      "#{@access_key}/#{date}/#{service}/api_request"
     end
   end
 end

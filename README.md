@@ -18,7 +18,11 @@ gem 'api_signature'
 
 ## Usage
 
+The usage is pretty simple. To sign a request use ApiSignature::Signer and for validation use ApiSignature::Validator.
+
 ### Create signature
+
+Sign a request with 'authorization' header. You can change header name, see Configuration section.
 
 ```ruby
 api_access_key = 'access_key'
@@ -42,26 +46,36 @@ signature.headers
 # signature.headers looks like:
 {
   "host"=>"example.com",
-  "x-datetime"=>"2019-12-28T11:21:47.836+0000",
-  "authorization"=>"API-HMAC-SHA256 Credential=access_key/20191228/api_request, SignedHeaders=host;user-agent;x-datetime, Signature=c45bc721386819b573db8e48366318a57b11dc17d98eeddd972dd200421d33ce"
+  "x-datetime"=>"2020-01-02T10:24:59.837+0000",
+  "authorization"=>"API-HMAC-SHA256 Credential=access_key/20200102/web/api_request, SignedHeaders=host;user-agent;x-datetime, Signature=032fc0b7defd66d86ef43ced8e6c3ee351ede21deca6bf1f89b9145f7a9105c1"
 }
 ```
 
 ### Validate signature
 
+Validate the request on the client-side. Note, that access_key can be extracted from the request.
+
 ```ruby
 request = {
-  http_method: 'POST',
-  url: 'https://example.com/posts',
-  headers: {
-    'User-Agent' => 'Test agent',
+  :http_method=>"POST",
+  :url=>"https://example.com/posts",
+  :headers=>{
+    "User-Agent"=>"Test agent",
     "host"=>"example.com",
-    "x-datetime"=>"2019-12-28T11:21:47.836+0000",
-    "authorization"=>"API-HMAC-SHA256 Credential=access_key/20191228/api_request, SignedHeaders=host;user-agent;x-datetime, Signature=c45bc721386819b573db8e48366318a57b11dc17d98eeddd972dd200421d33ce"
+    "x-datetime"=>"2020-01-02T10:24:59.837+0000",
+    "authorization"=>"API-HMAC-SHA256 Credential=access_key/20200102/web/api_request, SignedHeaders=host;user-agent;x-datetime, Signature=032fc0b7defd66d86ef43ced8e6c3ee351ede21deca6bf1f89b9145f7a9105c1"
   },
-  body: 'body'
+  :body=>"body"
 }
 
+# initialize validator with a request to validate
+validator = ApiSignature::Validator.new(request)
+
+# get access key from request headers
+validator.access_key
+
+# validate the request
+validator.valid?('your secret key here')
 ```
 
 ## Configuration
@@ -73,7 +87,17 @@ This could be changed via initializer:
 # config/initializers/api_signature.rb
 
 ApiSignature.setup do |config|
-  config.signature_ttl = 1.minute
+  # Time to live, by default 5 minutes
+  config.signature_ttl = 5 * 60
+
+  # Datetime format, by default iso8601
+  config.datetime_format = '%Y-%m-%dT%H:%M:%S.%L%z'
+
+  # Header name, by default authorization
+  config.signature_header = 'authorization'
+
+  # Service name, by default web
+  config.service = 'web'
 end
 ```
 
