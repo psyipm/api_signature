@@ -33,11 +33,16 @@ module ApiSignature
       private
 
       def with_signature(http_method, api_key, secret, action_name, params = {})
+        custom_headers = (params.delete(:headers) || {})
         path = PathBuilder.new(controller, action_name, params).path
-        headers = HeadersBuilder.new(api_key, secret, http_method, path).headers
-        custom_headers = params.delete(:headers) || {}
 
-        send(http_method, path, params, headers.merge(custom_headers))
+        signature = Signer.new(api_key, secret).sign_request(
+          http_method: http_method.to_s.upcase,
+          url: path,
+          headers: custom_headers
+        )
+
+        send(http_method, path, params, signature.headers)
       end
     end
   end

@@ -4,7 +4,7 @@
 
 # ApiSignature
 
-Simple HMAC-SHA1 authentication via headers
+Simple HMAC-SHA1 authentication via headers. Impressed by [AWS Requests with Signature Version 4](https://docs.aws.amazon.com/general/latest/gr/sigv4_signing.html)
 
 This gem will generate signature for the client requests and verify that signature on the server side
 
@@ -16,101 +16,88 @@ Add this line to your application's Gemfile:
 gem 'api_signature'
 ```
 
-And then execute:
-
-    $ bundle
-
 ## Usage
 
-### Server side
+The usage is pretty simple. To sign a request use ApiSignature::Signer and for validation use ApiSignature::Validator.
 
-Implement warden strategy:
-```ruby
-module MyApplication
-  module API
-    class ClientAuthenticatable < Warden::Strategies::Base
-      delegate :valid?, to: :api_request
+### Create signature
 
-      def authenticate!
-        # Find client in database by public api_key
-        resource = Client.find_for_token_authentication(api_request.access_key)
-        return fail!(:not_found_in_database) unless resource
-
-        # Check request signature
-        return unless api_request.correct?(resource.api_key, resource.api_secret)
-
-        # Perform some after_authentication callbacks
-        resource.after_authentication
-
-        # Tell warden that authentication was successful
-        success!(resource)
-      end
-
-      private
-
-      def api_request
-        @api_request ||= ::ApiSignature::Request.new(env)
-      end
-    end
-  end
-end
-```
+Sign a request with 'authorization' header. You can change header name, see Configuration section.
 
 ```ruby
-module MyApplication
-  module API
-    module Authentication
-      extend ActiveSupport::Concern
+api_access_key = 'access_key'
+api_secret_key = 'secret_key'
 
-      protected
-
-      def warden
-        @warden ||= request.env['warden']
-      end
-
-      def current_client
-        @current_client ||= warden.user(:client)
-      end
-
-      def authenticate_client!
-        warden.authenticate!(:client_authenticatable, scope: :client)
-      end
-    end
-  end
-end
-```
-
-```ruby
-class Api::BaseController < ActionController::API do
-  abstract!
-
-  include MyApplication::API::Authentication
-
-  before_action :authenticate_client!
-end
-```
-
-### On client side:
-
-```ruby
-options = {
-  request_method: 'GET',
-  path: '/api/v1/some_path'
-  access_key: 'client public api_key',
-  timestamp: Time.now.utc.to_i
+request = {
+  http_method: 'POST',
+  url: 'https://example.com/posts',
+  headers: {
+    'User-Agent' => 'Test agent'
+  },
+  body: 'body'
 }
 
-signature = ApiSignature::Generator.new(options).generate_signature('api_secret')
+# Sign your request
+signature = ApiSignature::Signer.new(api_access_key, api_secret_key).sign_request(request)
+
+# Now apply signed headers to your real request
+signature.headers
+
+# signature.headers looks like:
+{
+  "host"=>"example.com",
+  "x-datetime"=>"2020-01-02T10:24:59.837+0000",
+  "authorization"=>"API-HMAC-SHA256 Credential=access_key/20200102/web/api_request, SignedHeaders=host;user-agent;x-datetime, Signature=032fc0b7defd66d86ef43ced8e6c3ee351ede21deca6bf1f89b9145f7a9105c1"
+}
 ```
 
-By default, the generated signature will be valid for 2 hours
+### Validate signature
+
+Validate the request on the client-side. Note, that access_key can be extracted from the request.
+
+```ruby
+request = {
+  :http_method=>"POST",
+  :url=>"https://example.com/posts",
+  :headers=>{
+    "User-Agent"=>"Test agent",
+    "host"=>"example.com",
+    "x-datetime"=>"2020-01-02T10:24:59.837+0000",
+    "authorization"=>"API-HMAC-SHA256 Credential=access_key/20200102/web/api_request, SignedHeaders=host;user-agent;x-datetime, Signature=032fc0b7defd66d86ef43ced8e6c3ee351ede21deca6bf1f89b9145f7a9105c1"
+  },
+  :body=>"body"
+}
+
+# initialize validator with a request to validate
+validator = ApiSignature::Validator.new(request)
+
+# get access key from request headers
+validator.access_key
+
+# validate the request
+validator.valid?('your secret key here')
+```
+
+## Configuration
+
+By default, the generated signature will be valid for 5 minutes
 This could be changed via initializer:
 
 ```ruby
 # config/initializers/api_signature.rb
 
 ApiSignature.setup do |config|
-  config.signature_ttl = 1.minute
+  # Time to live, by default 5 minutes
+  config.signature_ttl = 5 * 60
+
+  # Datetime format, by default iso8601
+  config.datetime_format = '%Y-%m-%dT%H:%M:%S.%L%z'
+
+  # Header name, by default authorization
+  config.signature_header = 'authorization'
+
+  # Service name, by default web
+  config.service = 'web'
 end
 ```
 

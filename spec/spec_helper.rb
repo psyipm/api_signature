@@ -10,9 +10,4 @@ RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end
-
-  config.before(:suite) do
-    # Set time zone
-    Time.zone = 'Pacific Time (US & Canada)'
-  end
 end

@@ -5,44 +5,74 @@ require 'spec_helper'
 RSpec.describe ApiSignature::Builder do
   let(:env) do
     {
-      access_key: 'api_key',
-      secret: 'api_secret',
-      request_method: 'GET',
-      path: '/api/v1/some_path',
-      timestamp: '1503658902'
+      http_method: 'put',
+      url: 'https://domain.com/test',
+      headers: {
+        'User-Aget' => 'test',
+        'Content-Type' => 'application/json'
+      },
+      body: 'body'
     }
   end
-
   let(:builder) { described_class.new(env) }
 
-  it 'should respond to options keys methods' do
-    env.keys.each do |key|
-      expect(builder.respond_to?(key)).to eq true
-      expect(builder.send(key)).to eq env[key]
+  it 'must extract http_method' do
+    expect(builder.http_method).to eq 'PUT'
+  end
+
+  it 'must extract uri' do
+    expect(builder.uri.path).to eq '/test'
+  end
+
+  it 'must extract host' do
+    expect(builder.host).to eq 'domain.com'
+  end
+
+  it 'must extract headers' do
+    expect(builder.headers['user-aget']).to eq 'test'
+    expect(builder.headers['content-type']).to eq 'application/json'
+  end
+
+  it 'must extract datetime' do
+    expect(builder.datetime).not_to eq nil
+  end
+
+  it 'must extract date' do
+    expect(builder.date).not_to eq nil
+  end
+
+  it 'must extract content_sha256' do
+    expect(builder.content_sha256).not_to eq nil
+  end
+
+  it 'must extract body' do
+    expect(builder.body).not_to eq nil
+  end
+
+  it 'must build sign headers' do
+    expect(builder.build_sign_headers['host']).to eq 'domain.com'
+  end
+
+  it 'must not build full headers without build_sign_headers' do
+    expect { builder.full_headers }.to raise_error(ArgumentError)
+  end
+
+  context 'sign_headers' do
+    before(:each) do
+      builder.build_sign_headers(true)
     end
-  end
 
-  it 'should return headers hash' do
-    expect(builder.headers['X-Access-Key']).to eq env[:access_key]
-    expect(builder.headers['X-Timestamp']).to eq env[:timestamp]
-    expect(builder.headers['X-Signature']).to_not be_empty
-  end
+    it 'must build full headers' do
+      expect(builder.full_headers['host']).to eq 'domain.com'
+      expect(builder.full_headers['user-aget']).to eq 'test'
+    end
 
-  it 'should return options hash' do
-    expect(builder.options[:timestamp]).to eq env[:timestamp]
-    expect(builder.options[:request_method]).to eq env[:request_method]
-    expect(builder.options[:path]).to eq env[:path]
-    expect(builder.options[:access_key]).to eq env[:access_key]
-  end
+    it 'must build signed_headers_names' do
+      expect(builder.signed_headers_names).to eq 'content-type;host;user-aget;x-content-sha256;x-datetime'
+    end
 
-  it 'should generate signature' do
-    expect(builder.signature).to eq 'Sk5K4yDanrSK+TIa9LWMxRMnkl5DAxpb6Qi9Mm3Msf4='
-  end
-
-  it 'should delegate `expired?` to signature' do
-    params = env.merge(timestamp: Time.now.utc.to_i)
-    builder = described_class.new(params)
-
-    expect(builder.expired?).to eq false
+    it 'must build canonical_request' do
+      expect(builder.canonical_request('/method_name')).not_to eq nil
+    end
   end
 end
