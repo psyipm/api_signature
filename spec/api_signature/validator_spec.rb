@@ -154,5 +154,9 @@ RSpec.describe ApiSignature::Validator do
     it 'must return blank signed headers' do
       expect(validator.signed_headers).to eq({})
     end
+
+    it 'must not be valid' do
+      expect(validator.valid?(secret_key)).to eq false
+    end
   end
 end
