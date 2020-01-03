@@ -27,6 +27,8 @@ module ApiSignature
     end
 
     def access_key
+      return unless valid_credential?
+
       @access_key ||= auth_header.credential.split('/')[0]
     end
 
@@ -45,7 +47,11 @@ module ApiSignature
     end
 
     def valid_authorization?
-      !auth_header.credential.nil? && !auth_header.signature.nil?
+      valid_credential? && !auth_header.signature.nil?
+    end
+
+    def valid_credential?
+      !auth_header.credential.nil?
     end
 
     def valid_timestamp?

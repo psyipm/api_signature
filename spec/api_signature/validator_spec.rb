@@ -141,4 +141,18 @@ RSpec.describe ApiSignature::Validator do
       expect(validator.valid?(secret_key)).to eq false
     end
   end
+
+  context 'when empty authorization header' do
+    let(:request_to_validate) do
+      request_to_sign
+    end
+
+    it 'must return blank access_key' do
+      expect(validator.access_key).to eq nil
+    end
+
+    it 'must return blank signed headers' do
+      expect(validator.signed_headers).to eq({})
+    end
+  end
 end

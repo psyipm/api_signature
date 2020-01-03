@@ -56,6 +56,7 @@ signature.headers
 Validate the request on the client-side. Note, that access_key can be extracted from the request.
 
 ```ruby
+# the request to validate
 request = {
   :http_method=>"POST",
   :url=>"https://example.com/posts",
@@ -71,11 +72,14 @@ request = {
 # initialize validator with a request to validate
 validator = ApiSignature::Validator.new(request)
 
-# get access key from request headers
+# get access key from request headers (String)
 validator.access_key
 
-# validate the request
+# validate the request (Boolean)
 validator.valid?('your secret key here')
+
+# get only signed headers (Hash)
+validator.signed_headers
 ```
 
 ## Configuration
